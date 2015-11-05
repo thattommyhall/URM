@@ -15,7 +15,7 @@
           (assoc-in [:registers register] (if branch? current (dec current)))
           (assoc :position (if branch? branch-on-zero jump-to))))))
 
-(def End identity)
+(defn End [] identity)
 
 (defn next-state [{:keys [position program] :as state}]
   (let [next-fn (nth program position)]
@@ -27,8 +27,17 @@
       (get-in state [:registers 0])
       (recur next))))
 
-(defn URM [& statements]
-  (fn [& args]
-    (run {:program statements
-          :position 0
-          :registers (zipmap (range) args)})))
+(def lookup { 'Deb Deb 'Inc Inc 'End End })
+
+(defn functionise [[instruction & args]]
+  (apply (lookup instruction) args))
+
+(defn urm->fn [statements]
+  (let [program (map functionise statements)]
+    (fn [& args]
+      (run {:program program
+            :position 0
+            :registers (zipmap (range) args)}))))
+
+(defn eval-urm [statements args]
+  (apply (urm->fn statements) args))

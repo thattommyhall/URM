@@ -1,4 +1,5 @@
 (ns urm.core-test
+  (:refer-clojure :exclude [inc])
   (:require [expectations :refer :all]
             [urm.core :refer :all]))
 

@@ -1,4 +1,5 @@
-(ns urm.core)
+(ns urm.core
+  (:refer-clojure :exclude [inc]))
 
 (defn inc [register jump-to]
   [:inc register jump-to])
@@ -9,26 +10,23 @@
 (defn end []
   [:end])
 
-(defn inc-fn [register jump-to]
-  (fn [{:keys [position registers] :as state}]
-    (let [current (get-in state [:registers register] 0)]
-      (-> state
-          (assoc-in [:registers register] (+ 1 current))
-          (assoc :position jump-to)))))
+(defn apply-statement [[instruction register jump-to branch-on-zero :as statement]
+                       state]
+  (let [current (get-in state [:registers register] 0)
+        branch? (= current 0)]
+    (case instruction
+      :inc (-> state
+               (assoc-in [:registers register] (+ 1 current))
+               (assoc :position jump-to))
+      :deb (-> state
+               (assoc-in [:registers register] (if branch? current (dec current)))
+               (assoc :position (if branch? branch-on-zero jump-to)))
 
-(defn deb-fn [register jump-to branch-on-zero]
-  (fn [{:keys [position registers] :as state}]
-    (let [current (get-in state [:registers register] 0)
-          branch? (= current 0)]
-      (-> state
-          (assoc-in [:registers register] (if branch? current (dec current)))
-          (assoc :position (if branch? branch-on-zero jump-to))))))
-
-(defn end-fn [] identity)
+      :end state)))
 
 (defn next-state [{:keys [position program] :as state}]
-  (let [next-fn (nth program position)]
-    (next-fn state)))
+  (let [next-statement (nth program position)]
+    (apply-statement next-statement state)))
 
 (defn run [state]
   (let [next (next-state state)]
@@ -36,17 +34,11 @@
       (get-in state [:registers 0])
       (recur next))))
 
-(def lookup { :deb deb-fn :inc inc-fn :end end-fn })
-
-(defn functionise [[instruction & args]]
-  (apply (lookup instruction) args))
-
 (defn urm->fn [statements]
-  (let [program (map functionise statements)]
-    (fn [& args]
-      (run {:program program
-            :position 0
-            :registers (zipmap (range) args)}))))
+  (fn [& args]
+    (run {:program statements
+          :position 0
+          :registers (zipmap (range) args)})))
 
 (defn eval-urm [statements args]
   (apply (urm->fn statements) args))

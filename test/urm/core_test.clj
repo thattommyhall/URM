@@ -3,13 +3,15 @@
   (:require [expectations :refer :all]
             [urm.core :refer :all]))
 
-(expect 2
+(expect 1
         (eval-urm [(inc 0 1)
                    (end)]
-                  [1]))
+                  []))
 
-(def add (urm->fn [(deb 1 1 2)
+(def add (urm->fn [(deb 2 1 2)
                    (inc 0 0)
+                   (deb 1 3 4)
+                   (inc 0 2)
                    (end)]))
 
 (expect 3

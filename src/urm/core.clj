@@ -21,7 +21,6 @@
       :deb (-> state
                (assoc-in [:registers register] (if branch? current (dec current)))
                (assoc :position (if branch? branch-on-zero jump-to)))
-
       :end state)))
 
 (defn next-state [{:keys [position program] :as state}]
@@ -38,7 +37,7 @@
   (fn [& args]
     (run {:program statements
           :position 0
-          :registers (zipmap (range) args)})))
+          :registers (zipmap (drop 1 (range)) args)})))
 
 (defn eval-urm [statements args]
   (apply (urm->fn statements) args))
@@ -64,8 +63,7 @@
   ([urm1 urm2]
    (let [length1 (dec (count urm1))
          start-of-program (take length1 urm1)
-         rest-of-program (increment-instruction-numbers-by urm2 length1)
-         ]
+         rest-of-program (increment-instruction-numbers-by urm2 length1)]
      (concat start-of-program
              rest-of-program))))
 
@@ -80,7 +78,7 @@
   ([n so-far]
    (if (divides? n 2)
      (recur (/ n 2)
-            (+ so-far 1))
+            (+ 1 so-far))
      so-far)))
 
 (defn <<>> [x y]

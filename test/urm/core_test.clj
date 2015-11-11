@@ -8,14 +8,18 @@
                    (end)]
                   []))
 
-(def add (urm->fn [(deb 2 1 2)
-                   (inc 0 0)
-                   (deb 1 3 4)
-                   (inc 0 2)
-                   (end)]))
+(def add [(deb 2 1 2)
+          (inc 0 0)
+          (deb 1 3 4)
+          (inc 0 2)
+          (end)])
+
+(expect []
+        (comp-urm []
+                  []))
 
 (expect 3
-        (add 1 2))
+        ((urm->fn add) 1 2))
 
 (expect [(deb 0 0 1)
          (deb 1 1 2)
@@ -68,3 +72,47 @@
 (expect [(deb 0 0 2)
          (end)]
         (decode-program 786432))
+
+(expect {1 4
+         2 0
+         3 5}
+        (:registers (run {:program (zero 2)
+                             :position 0
+                             :registers {1 4
+                                         2 5
+                                         3 5}})))
+
+(expect {1 4
+         2 4
+         9 0}
+ (:registers (run {:program (copy 1 2)
+                   :position 0
+                   :registers {1 4
+                               2 5
+                               9 0}})))
+
+(expect { 1 0
+          2 (<<>> 0 13)
+          9 0}
+
+ (:registers (run {:program (push 1 2)
+                   :position 0
+                   :registers {1 0
+                               2 13
+                               9 0}})))
+
+(expect { 1 11
+          2 3
+          9 0}
+
+ (:registers (run {:program (pop 1 2)
+                   :position 0
+                   :registers {1 (<<>> 3 11)
+                               2 0
+                               9 0}})))
+
+;; (expect 2
+;;         (eval-urm full-urm
+;;                   [(code-program add)
+;;                    (code-list [1 1])
+;;                    0]))

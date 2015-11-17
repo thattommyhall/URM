@@ -1,5 +1,5 @@
 (ns urm.core-test
-  (:refer-clojure :exclude [inc])
+  (:refer-clojure :exclude [inc pop])
   (:require [expectations :refer :all]
             [urm.core :refer :all]))
 
@@ -14,26 +14,8 @@
           (inc 0 2)
           (end)])
 
-(expect []
-        (comp-urm []
-                  []))
-
 (expect 3
         ((urm->fn add) 1 2))
-
-(expect [(deb 0 0 1)
-         (deb 1 1 2)
-         (end)]
-        (comp-urm (zero 0)
-                  (zero 1)))
-
-(expect [(deb 0 0 1)
-         (deb 1 1 2)
-         (deb 2 2 3)
-         (end)]
-        (comp-urm (zero 0)
-                  (zero 1)
-                  (zero 2)))
 
 (expect (<<>> 0 13)
         (<> 2 3))
@@ -76,43 +58,67 @@
 (expect {1 4
          2 0
          3 5}
+
         (:registers (run {:program (zero 2)
-                             :position 0
-                             :registers {1 4
-                                         2 5
-                                         3 5}})))
+                          :position 0
+                          :registers {1 4
+                                      2 5
+                                      3 5}})))
 
 (expect {1 4
-         2 4
+         2 4}
+
+        (:registers (run {:program [(copy 1 2 1)
+                                    (end)]
+                          :position 0
+                          :registers {1 4
+                                      2 5
+                                      }})))
+
+(expect {1 0
+         2 (code-list [4 5 6])
          9 0}
- (:registers (run {:program (copy 1 2)
-                   :position 0
-                   :registers {1 4
-                               2 5
-                               9 0}})))
 
-(expect { 1 0
-          2 (<<>> 0 13)
-          9 0}
+        (:registers (run {:program [(push 1 2 1)
+                                    (end)]
+                          :position 0
+                          :registers {1 4
+                                      2 (code-list [5 6])
+                                      9 0}})))
 
- (:registers (run {:program (push 1 2)
-                   :position 0
-                   :registers {1 0
-                               2 13
-                               9 0}})))
+(expect {1 11
+         2 3
+         9 0}
 
-(expect { 1 11
-          2 3
-          9 0}
+        (:registers (run {:program [(pop 1 2 1 1)
+                                    (end)]
+                          :position 0
+                          :registers {1 (<<>> 3 11)
+                                      2 0
+                                      9 0}})))
 
- (:registers (run {:program (pop 1 2)
-                   :position 0
-                   :registers {1 (<<>> 3 11)
-                               2 0
-                               9 0}})))
+(expect {1 0
+         2 0
+         3 1}
 
-;; (expect 2
-;;         (eval-urm full-urm
-;;                   [(code-program add)
-;;                    (code-list [1 1])
-;;                    0]))
+        (:registers (run {:program [(pop 1 2 2 1)
+                                    (inc 3 2)
+                                    (end)] 
+                          :position 0
+                          :registers {1 0
+                                      2 0
+                                      }})))
+
+(expect 1
+        (eval-urm uurm
+                  [(code-program [(inc 0 1)
+                                  (end)])
+                   (code-list [0])
+                   0]))
+
+(expect 2
+        (eval-urm uurm
+                  [(code-program add)
+                   (code-list [0 1 1])
+                   0]))
+

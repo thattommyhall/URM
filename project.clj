@@ -7,4 +7,6 @@
                  [org.clojure/math.numeric-tower "0.0.4"]]
   :profiles {:dev {:dependencies [[expectations "1.4.41"]]
                    :plugins [[lein-expectations "0.0.7"]
-                             [lein-autoexpect "1.4.2"]]}})
+                             [lein-autoexpect "1.4.2"]]}}
+  :jvm-opts ["-XX:-OmitStackTraceInFastThrow"]
+  :main urm.core)

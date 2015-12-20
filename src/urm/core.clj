@@ -1,7 +1,9 @@
 (ns urm.core
   (:refer-clojure :exclude [inc pop])
   (:require [clojure.pprint :refer [pprint]]
-            [clojure.math.numeric-tower :as math]))
+            [clojure.math.numeric-tower :as math]
+
+            ))
 
 (declare un<<>> <<>>)
 
@@ -176,6 +178,62 @@
    (pop s current-register 12 0)
    (pop registers 0 16 16)
    (end)])
+
+(def add [(deb 2 1 2)
+          (inc 0 0)
+          (deb 1 3 4)
+          (inc 0 2)
+          (end)])
+
+(defn instruction->edge [[instruction register a b c]]
+  (case instruction
+    :inc [a]
+    :deb [a b]
+    :copy [b]
+    :push [b]
+    :pop [b c]
+    :end []))
+
+(defn label-for-line [urm l]
+  (if (= l -1 )
+    "α"
+    (let [instruction (nth urm l)
+          [type register second-register] instruction
+          second-register (if (or  (= type :copy)
+                                   (= type :push)
+                                   (= type :pop)
+                                   )
+                            second-register
+                            "")
+          ]
+      (cond (= type :end)
+            "Ω"
+            :else
+            (str "(" (name  type) " " register second-register ")")))))
+
+
+(defn draw-urm [urm]
+  (let [adjacents (merge {-1 [0]} (zipmap (range) (map instruction->edge urm)))]
+    (rhizome.viz/view-graph (keys adjacents) adjacents
+                            :node->descriptor (fn [n] {:label (label-for-line urm n)
+                                                       :shape :circle})
+                            :edge->descriptor (fn [l r]
+                                                )
+                            :options {:ratio 0.75
+                                      :size 10}
+
+                            )))
+
+(defn save-urm [urm filename]
+  (let [adjacents (merge {-1 [0]} (zipmap (range) (map instruction->edge urm)))]
+    (rhizome.viz/save-graph (keys adjacents) adjacents
+                            :node->descriptor (fn [n] {:label (label-for-line urm n)
+                                                       :shape :circle})
+                            :edge->descriptor (fn [l r]
+                                                )
+                            :options {:ratio 0.75
+                                      :size 800}
+                            :filename filename)))
 
 
 

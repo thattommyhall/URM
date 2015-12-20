@@ -8,11 +8,6 @@
                    (end)]
                   []))
 
-(def add [(deb 2 1 2)
-          (inc 0 0)
-          (deb 1 3 4)
-          (inc 0 2)
-          (end)])
 
 (expect 3
         ((urm->fn add) 1 2))
@@ -103,7 +98,7 @@
 
         (:registers (run {:program [(pop 1 2 2 1)
                                     (inc 3 2)
-                                    (end)] 
+                                    (end)]
                           :position 0
                           :registers {1 0
                                       2 0
@@ -121,4 +116,3 @@
                   [(code-program add)
                    (code-list [0 1 1])
                    0]))
-

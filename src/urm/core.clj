@@ -148,34 +148,34 @@
 (defn decode-program [code]
   (map decode-instruction (decode-list code)))
 
-(def p 1)
-(def a 2)
-(def pc 3)
-(def n 4)
-(def c 5)
-(def r 6)
+(def program 1)
+(def registers 2)
+(def position 3)
+(def current-instruction 4)
+(def current-instruction-type 5)
+(def current-register 6)
 (def s 7)
 (def t 8)
 (def z 9)
 
 (def uurm
-  [(copy p t 1)                         ; 0
-   (pop t n 2 15)                       ; 1
-   (deb pc 1 3)                         ; 2
-   (pop n c 4 15)                       ; 3
-   (pop a r 5 5)                        ; 4
-   (deb c 6 8)                          ; 5
-   (deb c 7 9)                          ; 6
-   (push r s 4)                         ; 7
-   (inc r 10)                           ; 8
-   (inc n 11)                           ; 9
-   (copy n pc 12)                       ; 10
-   (pop n pc 13 13)                     ; 11
-   (push r a 14)                        ; 12
-   (deb r 12 10)                        ; 13
-   (pop s r 12 0)                       ; 14
-   (pop a 0 16 16)                      ; 15
-   (end)])                              ; 16
+  [(copy program t 1)
+   (pop t current-instruction 2 15)
+   (deb position 1 3)
+   (pop current-instruction current-instruction-type 4 15)
+   (pop registers current-register 5 5)
+   (deb current-instruction-type 6 8)
+   (deb current-instruction-type 7 9)
+   (push current-register s 4)
+   (inc current-register 10)
+   (inc current-instruction 11)
+   (copy current-instruction position 12)
+   (pop current-instruction position 13 13)
+   (push current-register registers 14)
+   (deb current-register 12 10)
+   (pop s current-register 12 0)
+   (pop registers 0 16 16)
+   (end)])
 
 
 

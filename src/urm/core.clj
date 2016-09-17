@@ -1,11 +1,9 @@
 (ns urm.core
   (:refer-clojure :exclude [inc pop])
   (:require [clojure.pprint :refer [pprint]]
-            [clojure.math.numeric-tower :as math]
+            [clojure.math.numeric-tower :as math]))
 
-            ))
-
-(declare un<<>> <<>>)
+(declare decode-pair code-pair)
 
 (defn inc [register jump-to]
   [:inc register jump-to])
@@ -47,7 +45,7 @@
                 from-value (get-in state [:registers from] 0)
                 to-value (get-in state [:registers to] 0)]
             (-> state
-                (assoc-in [:registers to] (<<>> from-value to-value))
+                (assoc-in [:registers to] (code-pair from-value to-value))
                 (assoc-in [:registers from] 0)
                 (assoc :position exit)))
     :pop  (let [[from to halt exit] args
@@ -55,7 +53,7 @@
                 exit? (== 0 from-value)]
             (if exit?
               (assoc state :position exit)
-              (let [[h t] (un<<>> from-value)]
+              (let [[h t] (decode-pair from-value)]
                 (-> state
                     (assoc-in [:registers from] t)
                     (assoc-in [:registers to] h)
@@ -68,10 +66,10 @@
 
 (defn run [state]
   (let [next (next-state state)]
+    (println next)
     (if (= next state)
       state
       (recur next))))
-
 
 (defn urm->fn [statements]
   (fn [& args]
@@ -98,48 +96,48 @@
             (+ 1 so-far))
      so-far)))
 
-(defn <<>> [x y]
+(defn code-pair [x y]
   (* (math/expt 2 x)
      (+ (* 2 y) 1)))
 
-(defn un<<>> [n]
+(defn decode-pair [n]
   (let [x (factors-of-2 n)
         y (/ (dec (/ n (math/expt 2 x)))
              2)]
     [x y]))
 
-(defn <> [x y]
-  (dec (<<>> x y)))
+(defn code-pair* [x y]
+  (dec (code-pair x y)))
 
-(defn un<> [n]
-  (un<<>> (+ n 1)))
+(defn uncode-pair* [n]
+  (decode-pair (+ n 1)))
 
 (defn code-list [[h & t :as number-list]]
   (if (empty? number-list)
     0
-    (<<>> h (code-list t))))
+    (code-pair h (code-list t))))
 
 (defn decode-list [code]
   (if (== code 0)
     '()
-    (let [[h code'] (un<<>> code)]
+    (let [[h code'] (decode-pair code)]
       (cons h
             (decode-list code')))))
 
 (defn code-instruction [[instruction register jump-to branch-on-zero]]
   (case instruction
-    :inc (<<>> (* 2 register) jump-to)
-    :deb (<<>> (+ (* 2 register) 1)
-               (<> jump-to branch-on-zero))
+    :inc (code-pair (* 2 register) jump-to)
+    :deb (code-pair (+ (* 2 register) 1)
+               (code-pair* jump-to branch-on-zero))
     :end 0))
 
 (defn decode-instruction [code]
   (if (== code 0)
     (end)
-    (let [[y z] (un<<>> code)]
+    (let [[y z] (decode-pair code)]
       (if (even? y)
         (inc (/ y 2) z)
-        (let [[j k] (un<> z)]
+        (let [[j k] (uncode-pair* z)]
           (deb (/ (dec y) 2)
                j
                k))))))
@@ -212,34 +210,33 @@
             (str "(" (name  type) " " register second-register ")")))))
 
 
-(defn draw-urm [urm]
-  (let [adjacents (merge {-1 [0]} (zipmap (range) (map instruction->edge urm)))]
-    (rhizome.viz/view-graph (keys adjacents) adjacents
-                            :node->descriptor (fn [n] {:label (label-for-line urm n)
-                                                       :shape :circle})
-                            :edge->descriptor (fn [l r]
-                                                )
-                            :options {:ratio 0.75
-                                      :size 10}
+;; (defn draw-urm [urm]
+;;   (let [adjacents (merge {-1 [0]} (zipmap (range) (map instruction->edge urm)))]
+;;     (rhizome.viz/view-graph (keys adjacents) adjacents
+;;                             :node->descriptor (fn [n] {:label (label-for-line urm n)
+;;                                                        :shape :circle})
+;;                             :edge->descriptor (fn [l r]
+;;                                                 )
+;;                             :options {:ratio 0.75
+;;                                       :size 10}
 
-                            )))
+;;                             )))
 
-(defn save-urm [urm filename]
-  (let [adjacents (merge {-1 [0]} (zipmap (range) (map instruction->edge urm)))]
-    (rhizome.viz/save-graph (keys adjacents) adjacents
-                            :node->descriptor (fn [n] {:label (label-for-line urm n)
-                                                       :shape :circle})
-                            :edge->descriptor (fn [l r]
-                                                )
-                            :options {:ratio 0.75
-                                      :size 800}
-                            :filename filename)))
+;; (defn save-urm [urm filename]
+;;   (let [adjacents (merge {-1 [0]} (zipmap (range) (map instruction->edge urm)))]
+;;     (rhizome.viz/save-graph (keys adjacents) adjacents
+;;                             :node->descriptor (fn [n] {:label (label-for-line urm n)
+;;                                                        :shape :circle})
+;;                             :edge->descriptor (fn [l r]
+;;                                                 )
+;;                             :options {:ratio 0.75
+;;                                       :size 800}
+;;                             :filename filename)))
 
 
 
 (defn -main []
   (eval-urm uurm
-            [(code-program [(inc 0 1)
-                            (end)])
-             (code-list [0 0 0 0])
-             0]))
+                  [(code-program add)
+                   (code-list [0 2 3])
+                   ]))

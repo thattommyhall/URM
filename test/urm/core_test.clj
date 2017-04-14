@@ -12,8 +12,8 @@
 (expect 3
         ((urm->fn add) 1 2))
 
-(expect (code-pair 0 13)
-        (code-pair* 2 3))
+(expect (code-pair [0 13])
+        (code-pair* [2 3]))
 
 (expect 8
         (code-list [3]))
@@ -38,6 +38,9 @@
 
 (expect [0 13]
         (decode-pair 27))
+
+(expect 28
+        (code-pair (decode-pair (code-pair [2 3]))))
 
 (expect [2 3]
         (uncode-pair* 27))
@@ -85,10 +88,10 @@
          2 3
          9 0}
 
-        (:registers (run {:program [(pop 1 2 1 1)
-                                    (end)]
-                          :position 0
-                          :registers {1 (code-pair 3 11)
+        (:registers (run {:program   [(pop 1 2 1 1)
+                                      (end)]
+                          :position  0
+                          :registers {1 (code-pair [3 11])
                                       2 0
                                       9 0}})))
 

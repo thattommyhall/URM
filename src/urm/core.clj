@@ -3,7 +3,7 @@
   (:require [clojure.pprint :refer [pprint]]
             [clojure.math.numeric-tower :as math]))
 
-(declare decode-pair code-pair)
+(declare decode-pair encode-pair)
 
 (defn inc [register jump-to]
   [:inc register jump-to])
@@ -45,7 +45,7 @@
                 from-value (get-in state [:registers from] 0)
                 to-value (get-in state [:registers to] 0)]
             (-> state
-                (assoc-in [:registers to] (code-pair [from-value to-value]))
+                (assoc-in [:registers to] (encode-pair [from-value to-value]))
                 (assoc-in [:registers from] 0)
                 (assoc :position exit)))
     :pop  (let [[from to halt exit] args
@@ -96,7 +96,7 @@
             (+ 1 so-far))
      so-far)))
 
-(defn code-pair [[x y]]
+(defn encode-pair [[x y]]
   (* (math/expt 2 x)
      (+ (* 2 y) 1)))
 
@@ -106,16 +106,16 @@
              2)]
     [x y]))
 
-(defn code-pair* [pair]
-  (dec (code-pair pair)))
+(defn encode-pair* [pair]
+  (dec (encode-pair pair)))
 
 (defn uncode-pair* [n]
   (decode-pair (+ n 1)))
 
-(defn code-list [[h & t :as number-list]]
+(defn encode-list [[h & t :as number-list]]
   (if (empty? number-list)
     0
-    (code-pair [h (code-list t)])))
+    (encode-pair [h (encode-list t)])))
 
 (defn decode-list [code]
   (if (== code 0)
@@ -124,11 +124,11 @@
       (cons h
             (decode-list code')))))
 
-(defn code-instruction [[instruction register jump-to branch-on-zero]]
+(defn encode-instruction [[instruction register jump-to branch-on-zero]]
   (case instruction
-    :inc (code-pair [(* 2 register) jump-to])
-    :deb (code-pair [(+ (* 2 register) 1)
-                     (code-pair* [jump-to branch-on-zero])])
+    :inc (encode-pair [(* 2 register) jump-to])
+    :deb (encode-pair [(+ (* 2 register) 1)
+                     (encode-pair* [jump-to branch-on-zero])])
     :end 0))
 
 (defn decode-instruction [code]
@@ -142,8 +142,8 @@
                j
                k))))))
 
-(defn code-program [instructions]
-  (code-list (map code-instruction instructions)))
+(defn encode-program [instructions]
+  (encode-list (map encode-instruction instructions)))
 
 (defn decode-program [code]
   (map decode-instruction (decode-list code)))
@@ -237,6 +237,6 @@
 
 (defn -main []
   (eval-urm uurm
-                  [(code-program add)
-                   (code-list [0 2 3])
+                  [(encode-program add)
+                   (encode-list [0 2 3])
                    ]))
